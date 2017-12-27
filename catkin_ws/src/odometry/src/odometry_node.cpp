@@ -22,7 +22,7 @@ void encCallback(const std_msgs::String::ConstPtr& msg)
     init = true;
   }
   else{
-    
+        
   }
 }
 
