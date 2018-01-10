@@ -3,6 +3,6 @@ prefix=/home/oshadha/hsa2/catkin_ws/devel
 Name: odometry
 Description: Description of odometry
 Version: 0.0.0
-Cflags: 
+Cflags: -I/home/oshadha/hsa2/catkin_ws/devel/include
 Libs: -L/home/oshadha/hsa2/catkin_ws/devel/lib 
-Requires: 
+Requires: message_runtime

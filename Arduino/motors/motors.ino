@@ -50,10 +50,10 @@ void rightMotorCallback(const std_msgs::Int32& msg){
 
   // set direction of right wheel
   if(velR < 0){
-    digitalWrite(DIR_R, HIGH);
+    digitalWrite(DIR_R, LOW);
   }
   else{
-    digitalWrite(DIR_R, LOW);
+    digitalWrite(DIR_R, HIGH);
   }
 
   // send PWM signals to right motor
@@ -63,15 +63,15 @@ void rightMotorCallback(const std_msgs::Int32& msg){
 void leftEncEvent(){
   if (digitalRead(ENCA_L) == HIGH) {
     if (digitalRead(ENCB_L) == LOW) {
-      leftCount++;
-    } else {
       leftCount--;
+    } else {
+      leftCount++;
     }
   } else {
     if (digitalRead(ENCB_L) == LOW) {
-      leftCount--;
-    } else {
       leftCount++;
+    } else {
+      leftCount--;
     }
   }
 }
@@ -92,11 +92,14 @@ void rightEncEvent(){
   }
 }
 
+//odometry::Encoder enc_msg;
+std_msgs::Int32 left_enc_msg;
+std_msgs::Int32 right_enc_msg;
+//ros::Publisher enc_pub("encoders", &enc_msg);
+ros::Publisher left_enc_pub("left_encoder", &left_enc_msg);
+ros::Publisher right_enc_pub("right_encoder", &right_enc_msg);
 ros::Subscriber<std_msgs::Int32> lmotor_sub("left_motor", &leftMotorCallback);
 ros::Subscriber<std_msgs::Int32> rmotor_sub("right_motor", &rightMotorCallback);
-
-odometry::Encoder enc_msg;
-ros::Publisher enc_pub("encoders", &enc_msg);
 
 // MAIN FUNCTIONS
 void setup(){
@@ -120,16 +123,27 @@ void setup(){
 
   // Initialize ROS
   nh.initNode();
+//  nh.advertise(enc_pub);
+  nh.advertise(left_enc_pub);
+  nh.advertise(right_enc_pub);
   nh.subscribe(lmotor_sub);
   nh.subscribe(rmotor_sub);
-  nh.advertise(enc_pub);
+
+  while (!nh.connected())
+    nh.spinOnce();
 }
 
 void loop(){
-  enc_msg.header.stamp = nh.now();
-  enc_msg.left_enc = leftCount;
-  enc_msg.right_enc = rightCount;
-  enc_pub.publish(&enc_msg);
+//  enc_msg.header.stamp = nh.now();
+//  enc_msg.left_enc = leftCount;
+//  enc_msg.right_enc = rightCount;
+//  enc_pub.publish(&enc_msg);
+
+  left_enc_msg.data = leftCount;
+  right_enc_msg.data = rightCount;
+
+  left_enc_pub.publish(&left_enc_msg);
+  right_enc_pub.publish(&right_enc_msg);
 
   delay(1);
   nh.spinOnce();

@@ -1,6 +1,8 @@
+#include <ros/ros.h>
 #include <geometry_msgs/Pose.h>
 #include <odometry/Encoder.h>
 #include <std_msgs/String.h>
+
 #include <string.h>
 #include <math.h>
 
@@ -15,12 +17,12 @@ int prev_enc_l, prev_enc_r;
 int prev_time;
 bool init = false;
 
-void encCallback(const odometry::Encoder::ConstPtr& msg)
+void encCallback(const odometry::Encoder msg)
 {
   // get encoder values
   int left_enc = msg.left_enc;
   int right_enc = msg.right_enc;
-  float cur_time = msg.header.stamp.secs + (msg.header.stamp.nsecs/1E9);
+  float cur_time = msg.header.stamp.sec + (msg.header.stamp.nsec/1E9);
 
   if(!init){
     // initialize globals

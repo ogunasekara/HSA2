@@ -91,9 +91,9 @@ endif()
 # flag project as catkin-based to distinguish if a find_package()-ed project is a catkin project
 set(odometry_FOUND_CATKIN_PROJECT TRUE)
 
-if(NOT " " STREQUAL " ")
+if(NOT "/home/oshadha/hsa2/catkin_ws/devel/include " STREQUAL " ")
   set(odometry_INCLUDE_DIRS "")
-  set(_include_dirs "")
+  set(_include_dirs "/home/oshadha/hsa2/catkin_ws/devel/include")
   if(NOT " " STREQUAL " ")
     set(_report "Check the issue tracker '' and consider creating a ticket if the problem has not been reported yet.")
   elseif(NOT " " STREQUAL " ")
@@ -152,7 +152,7 @@ foreach(library ${libraries})
   endif()
 endforeach()
 
-set(odometry_EXPORTED_TARGETS "")
+set(odometry_EXPORTED_TARGETS "odometry_generate_messages_cpp;odometry_generate_messages_eus;odometry_generate_messages_lisp;odometry_generate_messages_nodejs;odometry_generate_messages_py")
 # create dummy targets for exported code generation targets to make life of users easier
 foreach(t ${odometry_EXPORTED_TARGETS})
   if(NOT TARGET ${t})
@@ -160,7 +160,7 @@ foreach(t ${odometry_EXPORTED_TARGETS})
   endif()
 endforeach()
 
-set(depends "")
+set(depends "message_runtime")
 foreach(depend ${depends})
   string(REPLACE " " ";" depend_list ${depend})
   # the package name of the dependency must be kept in a unique variable so that it is not overwritten in recursive calls
@@ -189,7 +189,7 @@ foreach(depend ${depends})
   list(APPEND odometry_EXPORTED_TARGETS ${${odometry_dep}_EXPORTED_TARGETS})
 endforeach()
 
-set(pkg_cfg_extras "")
+set(pkg_cfg_extras "odometry-msg-extras.cmake")
 foreach(extra ${pkg_cfg_extras})
   if(NOT IS_ABSOLUTE ${extra})
     set(extra ${odometry_DIR}/${extra})
