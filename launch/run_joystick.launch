@@ -1,0 +1,9 @@
+<launch>
+  <!-- Joystick Control -->
+  <node name="joystick" pkg="joy" type="joy_node">
+   <param name="dev" type="string" value="/dev/input/by-id/usb-Performance_Designed_Products_Gamepad_for_Xbox_360_07655E0B-joystick"/>
+  </node>
+
+  <!-- Controller Node -->
+  <node name="controller" pkg="controller" type="controller_node"/>
+</launch>
