@@ -1,8 +1,0 @@
-prefix=/home/oshadha/hsa2/catkin_ws/install
-
-Name: odometry
-Description: Description of odometry
-Version: 0.0.0
-Cflags: -I/home/oshadha/hsa2/catkin_ws/install/include
-Libs: -L/home/oshadha/hsa2/catkin_ws/install/lib 
-Requires: message_runtime

@@ -1,0 +1,8 @@
+prefix=/home/oshadha/HSA2/devel
+
+Name: controller
+Description: Description of controller
+Version: 0.0.0
+Cflags: 
+Libs: -L/home/oshadha/HSA2/devel/lib 
+Requires: 
