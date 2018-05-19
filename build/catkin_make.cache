@@ -1,2 +1,0 @@
-controller:odometry
--DCATKIN_DEVEL_PREFIX=/home/oshadha/HSA2/devel -DCMAKE_INSTALL_PREFIX=/home/oshadha/HSA2/install -G Unix Makefiles

@@ -1,8 +1,0 @@
-prefix=/home/oshadha/HSA2/devel
-
-Name: odometry
-Description: Description of odometry
-Version: 0.0.0
-Cflags: -I/home/oshadha/HSA2/devel/include
-Libs: -L/home/oshadha/HSA2/devel/lib 
-Requires: message_runtime
