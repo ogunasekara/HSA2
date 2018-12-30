@@ -1,0 +1,10 @@
+<launch>
+  <!-- Motor Control Bridge -->
+  <node name="motors" pkg="rosserial_python" type="serial_node.py"  output="screen">
+    <param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_9533633363535180F1D0-if00"/>
+  </node>
+
+  <node name="vel_calc" pkg="vel_calc" type="vel_calc.py" output="screen"/>
+  
+  <node name="vel_controller" pkg="vel_controller" type="vel_controller.py" output="screen"/>
+</launch>

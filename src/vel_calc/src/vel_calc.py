@@ -7,7 +7,7 @@ from std_msgs.msg import Float32, Int32
 
 WHEEL_DIAM = 0.152 # m
 TICKS_PER_REV = 280
-VEL_GAIN = 0.1
+VEL_GAIN = 0.08
 
 left_dist = 0.0
 left_vel = 0.0
