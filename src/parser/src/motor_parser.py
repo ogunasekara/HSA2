@@ -13,8 +13,8 @@ class MotorParser(object):
         SERIAL_BAUD = rospy.get_param('baud', 115200)
 
         # initialize attributes
-        self.motor1_vel = 0
-        self.motor2_vel = 0
+        self.left_motor_vel = 0
+        self.right_motor_vel = 0
 
         # configure and initialize serial port
         self.ser = serial.Serial()
@@ -23,13 +23,13 @@ class MotorParser(object):
         self.ser.open()
 
         # initialize ROS publishers and subscribers
-        self.motor1_vel_pub = rospy.Publisher('motor1/fb/vel', Float32, queue_size=10)
-        self.motor1_enc_pub = rospy.Publisher('motor1/fb/enc', Int32, queue_size=10)
-        rospy.Subscriber("motor1/cmd/vel", Float32, self.motor1_vel_callback)
+        self.left_motor_vel_pub = rospy.Publisher('left_motor/fb/vel', Float32, queue_size=10)
+        self.left_motor_enc_pub = rospy.Publisher('left_motor/fb/enc', Int32, queue_size=10)
+        rospy.Subscriber("left_motor/cmd/vel", Float32, self.left_motor_vel_callback)
 
-        self.motor2_vel_pub = rospy.Publisher('motor2/fb/vel', Float32, queue_size=10)
-        self.motor2_enc_pub = rospy.Publisher('motor2/fb/enc', Int32, queue_size=10)
-        rospy.Subscriber("motor2/cmd/vel", Float32, self.motor2_vel_callback)
+        self.right_motor_vel_pub = rospy.Publisher('right_motor/fb/vel', Float32, queue_size=10)
+        self.right_motor_enc_pub = rospy.Publisher('right_motor/fb/enc', Int32, queue_size=10)
+        rospy.Subscriber("right_motor/cmd/vel", Float32, self.right_motor_vel_callback)
 
         # self.imu_pub = rospy.Publisher('imu', Imu, queue_size=10)
 
@@ -42,10 +42,10 @@ class MotorParser(object):
                 parsed = msg.decode("utf-8")
                 vals = self.parse_message(parsed)
 
-                self.motor1_enc_pub.publish(int(vals[0]))
-                self.motor2_enc_pub.publish(int(vals[1]))
-                self.motor1_vel_pub.publish(float(vals[2]))
-                self.motor2_vel_pub.publish(float(vals[3]))
+                self.left_motor_enc_pub.publish(int(vals[0]))
+                self.right_motor_enc_pub.publish(int(vals[1]))
+                self.left_motor_vel_pub.publish(float(vals[2]))
+                self.right_motor_vel_pub.publish(float(vals[3]))
 
                 # imu_msg = Imu()
                 # imu_msg.orientation.w = float(vals[4])
@@ -54,18 +54,18 @@ class MotorParser(object):
                 # imu_msg.orientation.z = float(vals[7])
                 # self.imu_pub.publish(imu_msg)
 
-                self.ser.write(b'%f,%f\n' % (self.motor1_vel, self.motor2_vel))
+                self.ser.write(b'%f,%f\n' % (self.left_motor_vel, self.right_motor_vel))
             except:
                 continue
             rate.sleep()        
 
     # ROS CALLBACK FUNCTIONS
 
-    def motor1_vel_callback(self, msg):
-        self.motor1_vel = msg.data
+    def left_motor_vel_callback(self, msg):
+        self.left_motor_vel = msg.data
 
-    def motor2_vel_callback(self, msg):
-        self.motor2_vel = msg.data
+    def right_motor_vel_callback(self, msg):
+        self.right_motor_vel = msg.data
 
     # HELPER FUNCTIONS
 
@@ -74,4 +74,7 @@ class MotorParser(object):
         return vals
 
 if __name__ == '__main__':
-    MotorParser()
+    try:
+        MotorParser()
+    except rospy.ROSInterruptException:
+        pass

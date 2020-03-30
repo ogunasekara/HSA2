@@ -1,0 +1,9 @@
+<launch>
+    <node name="joy" pkg="joy" type="joy_node" required="true">
+        <param name="dev" type="str" value="/dev/input/by-id/usb-Microsoft_Controller_7EED8EFC5A79-joystick" />
+    </node>
+
+    <node name="teleop_parser" pkg="parser" type="teleop_parser.py" required="true"/>
+
+    <!-- <node name="base_localizer" pkg="localizer" type="base_localizer.py" required="true"/> -->
+</launch>
