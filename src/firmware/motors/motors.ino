@@ -1,13 +1,13 @@
 // MACRO DEFINITIONS
-#define LEFT_WHEEL_PWM 6
-#define LEFT_WHEEL_DIR 12
-#define LEFT_WHEEL_ENCA 2
-#define LEFT_WHEEL_ENCB 7
+#define RIGHT_WHEEL_PWM 6
+#define RIGHT_WHEEL_DIR 12
+#define RIGHT_WHEEL_ENCA 2
+#define RIGHT_WHEEL_ENCB 7
 
-#define RIGHT_WHEEL_PWM 5
-#define RIGHT_WHEEL_DIR 11
-#define RIGHT_WHEEL_ENCA 3
-#define RIGHT_WHEEL_ENCB 4
+#define LEFT_WHEEL_PWM 5
+#define LEFT_WHEEL_DIR 11
+#define LEFT_WHEEL_ENCA 3
+#define LEFT_WHEEL_ENCB 4
 
 #define TICKS_PER_REV 200.0 // ppr of motor encoder
 #define WHEEL_RADIUS 0.075 // radius of attached wheel (m)
