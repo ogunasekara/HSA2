@@ -10,9 +10,9 @@ from geometry_msgs.msg import Pose
 class BaseLocalizer(object):
     def __init__(self):
         # get parameters
-        self.WHEEL_RADIUS = rospy.get_param('wheel_radius', 10)
-        self.WHEEL_BASE = rospy.get_param('wheel_base', 10)
-        self.ENC_TPR = rospy.get_param('tpr', 10)
+        self.WHEEL_RADIUS = rospy.get_param('wheel_radius', 0.075)
+        self.WHEEL_BASE = rospy.get_param('wheel_base', 0.3937)
+        self.ENC_TPR = rospy.get_param('tpr', 200.0)
 
         # initialize attributes
         self.state = [0, 0, 0]
