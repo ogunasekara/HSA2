@@ -4,7 +4,7 @@ import serial
 import sys
 
 from std_msgs.msg import Int32, Float32
-from sensor_msgs.msg import Imu
+from sensor_msgs.msg import Imu, String
 
 class MotorParser(object):
     def __init__(self):
@@ -31,6 +31,8 @@ class MotorParser(object):
         self.right_motor_enc_pub = rospy.Publisher('right_motor/fb/enc', Int32, queue_size=10)
         rospy.Subscriber("right_motor/cmd/vel", Float32, self.right_motor_vel_callback)
 
+        # rospy.Subscriber("motor/cmd/vel", String, self.motor_vel_callback)
+
         # self.imu_pub = rospy.Publisher('imu', Imu, queue_size=10)
 
         # start main loop
@@ -54,7 +56,7 @@ class MotorParser(object):
                 # imu_msg.orientation.z = float(vals[7])
                 # self.imu_pub.publish(imu_msg)
 
-                self.ser.write(b'%f,%f\n' % (self.left_motor_vel, self.right_motor_vel))
+                self.ser.write(b'L%f,R%f\n' % (self.left_motor_vel, self.right_motor_vel))
             except:
                 continue
             rate.sleep()        
@@ -66,6 +68,18 @@ class MotorParser(object):
 
     def right_motor_vel_callback(self, msg):
         self.right_motor_vel = msg.data
+    
+    # def motor_vel_callback(self, msg):
+    #     vals = msg.data.strip().split(',')
+
+    #     if len(vals) != 2: pass
+
+    #     if vals[0][0] != 'L': pass
+
+    #     if vals[1][0] != 'R': pass
+
+    #     self.left_motor_vel = float(vals[0][1:])
+    #     self.right_motor_vel = float(vals[1][1:])
 
     # HELPER FUNCTIONS
 

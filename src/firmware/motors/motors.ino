@@ -15,7 +15,7 @@
 // PID Constants
 float left_motor_p = 80;
 float left_motor_i = 0;
-float left_motor_d = 20;
+float left_motor_d = 0;
 float left_motor_punch = 0;
 float left_motor_deadzone = 0;
 float left_motor_i_clamp = 0;
@@ -24,7 +24,7 @@ float left_motor_last, left_motor_accumulate;
 
 float right_motor_p = 80;
 float right_motor_i = 0;
-float right_motor_d = 20;
+float right_motor_d = 0;
 float right_motor_punch = 0;
 float right_motor_deadzone = 0;
 float right_motor_i_clamp = 0;
@@ -98,8 +98,10 @@ ISR(TIMER1_OVF_vect)
   int left_enc_diff = left_enc_cur_ticks - left_enc_prev_ticks;
   int right_enc_diff = right_enc_cur_ticks - right_enc_prev_ticks;
 
-  left_motor_cur_speed = 2 * PI * WHEEL_RADIUS * (left_enc_diff / TICKS_PER_REV) / 0.1;
-  right_motor_cur_speed = 2 * PI * WHEEL_RADIUS * (right_enc_diff / TICKS_PER_REV) / 0.1;
+  float k = 0.9;
+
+  left_motor_cur_speed += k * (2 * PI * WHEEL_RADIUS * (left_enc_diff / TICKS_PER_REV) / 0.1 - left_motor_cur_speed);
+  right_motor_cur_speed += k * (2 * PI * WHEEL_RADIUS * (right_enc_diff / TICKS_PER_REV) / 0.1 - right_motor_cur_speed);
 
   left_enc_prev_ticks = left_enc_cur_ticks;
   right_enc_prev_ticks = right_enc_cur_ticks;
@@ -138,6 +140,10 @@ ISR(TIMER1_OVF_vect)
   Serial.print(left_motor_cur_speed);
   Serial.print(",");
   Serial.print(right_motor_cur_speed);
+//  Serial.print(",");
+//  Serial.print(left_motor_command);
+//  Serial.print(",");
+//  Serial.print(right_motor_command);
   Serial.print("\n");
 }
 
@@ -184,13 +190,19 @@ void loop()
 //    int val1 = Serial.parseInt();
 //    int val2 = Serial.parseInt();
     
-    left_motor_desired_speed = Serial.parseFloat();
-    right_motor_desired_speed = Serial.parseFloat();
+//    left_motor_desired_speed = Serial.parseFloat();
+//    right_motor_desired_speed = Serial.parseFloat();
 
 //    setMotorSpeed(left_motor_desired_speed, 1);
 //    setMotorSpeed(right_motor_desired_speed, 2);
     
     char r = Serial.read();
+    if(r == 'L'){
+      left_motor_desired_speed = Serial.parseFloat();
+    }
+    if(r == 'R'){
+      right_motor_desired_speed = Serial.parseFloat();
+    }
     if(r == '\n'){}
 
 //    setMotorSpeed(val1,1);

@@ -2,7 +2,7 @@
 # license removed for brevity
 import rospy
 import sys
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, String
 from sensor_msgs.msg import Joy
 
 class TeleopParser(object):
@@ -17,6 +17,8 @@ class TeleopParser(object):
 
         self.left_motor_vel_pub = rospy.Publisher('left_motor/cmd/vel', Float32, queue_size=10)
         self.right_motor_vel_pub = rospy.Publisher('right_motor/cmd/vel', Float32, queue_size=10)
+        # self.motor_vel_pub = rospy.Publisher('motor/cmd/vel', String, queue_size=10)
+
         rospy.Subscriber("joy", Joy, self.joy_callback)
 
         rospy.init_node('teleop_parser', anonymous=True)
@@ -44,6 +46,9 @@ class TeleopParser(object):
         
         self.right_motor_vel_pub.publish(vels[1])
         self.left_motor_vel_pub.publish(vels[0])
+
+        # motor_str = "L%f,R%f" %(vels[1], vels[0])
+        # self.motor_vel_pub.publish(motor_str)
         
     def convert_vels(self):
         vl = (2.0 * self.v - self.L * self.w) / 2.0
