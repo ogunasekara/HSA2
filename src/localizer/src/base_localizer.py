@@ -22,8 +22,8 @@ class BaseLocalizer(object):
 
         # initialize ROS publishers and subscribers
         self.pose_pub = rospy.Publisher('base/pose', Pose, queue_size=10)
-        rospy.Subscriber("motor1/fb/enc", Int32, self.motor1_enc_callback)
-        rospy.Subscriber("motor2/fb/enc", Int32, self.motor2_enc_callback)
+        rospy.Subscriber("left_motor/fb/enc", Int32, self.left_motor_enc_callback)
+        rospy.Subscriber("right_motor/fb/enc", Int32, self.right_motor_enc_callback)
 
         # start main loop
         rospy.init_node('base_localizer', anonymous=True)
@@ -61,10 +61,10 @@ class BaseLocalizer(object):
 
     # ROS CALLBACK FUNCTIONS
 
-    def motor1_enc_callback(self, msg):
+    def left_motor_enc_callback(self, msg):
         self.cur_enc[0] = msg.data
 
-    def motor2_enc_callback(self, msg):
+    def right_motor_enc_callback(self, msg):
         self.cur_enc[1] = msg.data
 
     # HELPER FUNCTIONS
