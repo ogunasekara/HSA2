@@ -1,0 +1,7 @@
+<launch>
+    <node name="motor_parser" pkg="parser" type="motor_parser.py" required="true">
+        <param name="port" value="/dev/serial/by-id/usb-Arduino_Srl_Arduino_Uno_9533633363535180F1D0-if00"/>
+        <param name="baud" value="115200"/>
+    </node>
+    <node name="base_localizer" pkg="localizer" type="base_localizer.py" required="true"/>
+</launch>
