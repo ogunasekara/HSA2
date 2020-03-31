@@ -1,61 +1,84 @@
 #!/usr/bin/env python
 import rospy
+import tf2_ros
 import sys
 
 import numpy as np
 
 from std_msgs.msg import Int32
-from geometry_msgs.msg import Pose
+from geometry_msgs.msg import Pose, TransformStamped
+
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 class BaseLocalizer(object):
     def __init__(self):
         # get parameters
         self.WHEEL_RADIUS = rospy.get_param('wheel_radius', 0.075)
         self.WHEEL_BASE = rospy.get_param('wheel_base', 0.3937)
-        self.ENC_TPR = rospy.get_param('tpr', 200.0)
+        self.ENC_TPR = rospy.get_param('tpr', 1180.0)
 
         # initialize attributes
         self.state = [0, 0, 0]
         self.ang_quat = [0, 0, 0, 0]
-        self.prev_enc = [None, None]
-        self.cur_enc = [None, None]
+        self.prev_enc = np.array([0, 0])
+        self.cur_enc = np.array([None, None])
+
+        # start main loop
+        rospy.init_node('base_localizer', anonymous=True)
 
         # initialize ROS publishers and subscribers
         self.pose_pub = rospy.Publisher('base/pose', Pose, queue_size=10)
         rospy.Subscriber("left_motor/fb/enc", Int32, self.left_motor_enc_callback)
         rospy.Subscriber("right_motor/fb/enc", Int32, self.right_motor_enc_callback)
 
-        # start main loop
-        rospy.init_node('base_localizer', anonymous=True)
+        rospy.loginfo(self.WHEEL_BASE)
+
+        while None in self.cur_enc:
+            continue
+
+        self.prev_enc[0] = self.cur_enc[0]
+        self.prev_enc[1] = self.cur_enc[1]
+
         rate = rospy.Rate(10) # 10hz
         while not rospy.is_shutdown():
+            enc_diff = np.array(self.cur_enc) - np.array(self.prev_enc)
 
-            if None in self.cur_enc: continue
+            # rospy.loginfo(enc_diff)
             
-            try:
-                # ensure prev_enc is initialized
-                if None in self.prev_enc: 
-                    self.prev_enc = self.cur_enc
-                    continue
+            self.prev_enc[0] = self.cur_enc[0]
+            self.prev_enc[1] = self.cur_enc[1]
 
-                # perform state update
-                enc_diff = self.cur_enc - self.prev_enc
-                self.prev_enc = self.cur_enc
-                self.runge_kutta_update(enc_diff)
+            self.runge_kutta_update(enc_diff)
 
-                # publish pose
-                pose_msg = Pose()
-                pose_msg.position.x = self.state[0]
-                pose_msg.position.y = self.state[1]
-                pose_msg.orientation.x = self.ang_quat[0]
-                pose_msg.orientation.y = self.ang_quat[1]
-                pose_msg.orientation.z = self.ang_quat[2]
-                pose_msg.orientation.w = self.ang_quat[3]
+            # publish pose
+            pose_msg = Pose()
+            pose_msg.position.x = self.state[0]
+            pose_msg.position.y = self.state[1]
+            pose_msg.position.z = 0
+            pose_msg.orientation.x = self.ang_quat[0]
+            pose_msg.orientation.y = self.ang_quat[1]
+            pose_msg.orientation.z = self.ang_quat[2]
+            pose_msg.orientation.w = self.ang_quat[3]
 
-                self.pose_pub.publish(pose_msg)
+            self.pose_pub.publish(pose_msg)
 
-            except:
-                continue
+            # send transform message to ROS
+            broadcaster = tf2_ros.StaticTransformBroadcaster()
+            tf_msg = TransformStamped()
+
+            tf_msg.header.stamp = rospy.Time.now()
+            tf_msg.header.frame_id = "odom"
+            tf_msg.child_frame_id = "base_link"
+
+            tf_msg.transform.translation.x = self.state[0]
+            tf_msg.transform.translation.y = self.state[1]
+            tf_msg.transform.translation.z = 0
+            tf_msg.transform.rotation.x = self.ang_quat[0]
+            tf_msg.transform.rotation.y = self.ang_quat[1]
+            tf_msg.transform.rotation.z = self.ang_quat[2]
+            tf_msg.transform.rotation.w = self.ang_quat[3]
+
+            broadcaster.sendTransform(tf_msg)
 
             rate.sleep()
 
@@ -94,11 +117,13 @@ class BaseLocalizer(object):
         k32 = w
 
         self.state[0] = self.state[0] + (1.0/6.0) * (k00 + 2*(k10 + k20) * k30)
-        self.state[1] = self.state[0] + (1.0/6.0) * (k01 + 2*(k11 + k21) * k31)
-        self.state[2] = self.state[0] + (1.0/6.0) * (k02 + 2*(k12 + k22) * k32)
-        self.state[2] = np.atan2(np.sin(self.state[2]), np.cos(self.state[2]))
+        self.state[1] = self.state[1] + (1.0/6.0) * (k01 + 2*(k11 + k21) * k31)
+        self.state[2] = self.state[2] + w
+        self.state[2] = np.arctan2(np.sin(self.state[2]), np.cos(self.state[2]))
 
-        self.ang_quat = self.euler_to_quaternion(0, 0, self.state[2])
+        rospy.loginfo(self.state)
+
+        self.ang_quat = quaternion_from_euler(0, 0, self.state[2])
 
     # https://computergraphics.stackexchange.com/questions/8195/how-to-convert-euler-angles-to-quaternions-and-get-the-same-euler-angles-back-fr
     def euler_to_quaternion(self, roll, pitch, yaw):
