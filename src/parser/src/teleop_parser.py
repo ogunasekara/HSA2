@@ -8,7 +8,7 @@ from sensor_msgs.msg import Joy
 class TeleopParser(object):
     def __init__(self):
         # get parameters
-        self.lin_vel_max = rospy.get_param('lin_vel_max', 0.5)
+        self.lin_vel_max = rospy.get_param('lin_vel_max', 0.4)
         self.ang_vel_scale = rospy.get_param('ang_vel_scale', 2.5)
         
         self.v = 0

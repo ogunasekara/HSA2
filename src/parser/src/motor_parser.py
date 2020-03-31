@@ -4,7 +4,7 @@ import serial
 import sys
 
 from std_msgs.msg import Int32, Float32
-from sensor_msgs.msg import Imu, String
+from sensor_msgs.msg import Imu
 
 class MotorParser(object):
     def __init__(self):
@@ -22,6 +22,9 @@ class MotorParser(object):
         self.ser.port = SERIAL_PORT
         self.ser.open()
 
+        # initialize node
+        rospy.init_node('motor_parser', anonymous=True)
+
         # initialize ROS publishers and subscribers
         self.left_motor_vel_pub = rospy.Publisher('left_motor/fb/vel', Float32, queue_size=10)
         self.left_motor_enc_pub = rospy.Publisher('left_motor/fb/enc', Int32, queue_size=10)
@@ -36,8 +39,7 @@ class MotorParser(object):
         # self.imu_pub = rospy.Publisher('imu', Imu, queue_size=10)
 
         # start main loop
-        rospy.init_node('motor_parser', anonymous=True)
-        rate = rospy.Rate(10) # 10hz
+        rate = rospy.Rate(20) # 10hz
         while not rospy.is_shutdown():
             try:
                 msg = self.ser.readline()
