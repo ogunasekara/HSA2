@@ -15,29 +15,28 @@ class TeleopParser(object):
         self.w = 0
         self.L = 0.3937
 
+        rospy.init_node('teleop_parser', anonymous=True)
+        
         self.left_motor_vel_pub = rospy.Publisher('left_motor/cmd/vel', Float32, queue_size=10)
         self.right_motor_vel_pub = rospy.Publisher('right_motor/cmd/vel', Float32, queue_size=10)
-        # self.motor_vel_pub = rospy.Publisher('motor/cmd/vel', String, queue_size=10)
-
         rospy.Subscriber("joy", Joy, self.joy_callback)
-
-        rospy.init_node('teleop_parser', anonymous=True)
+        
         rospy.spin()
 
-        # rate = rospy.Rate(10) # 10hz
-        # while not rospy.is_shutdown():
-            
-        #     rate.sleep()
-
     def joy_callback(self, msg):
-        if msg.buttons[0] == 1:
-            self.v = self.lin_vel_max
-        elif msg.buttons[1] == 1:
-            self.v = -self.lin_vel_max
+        if (msg.axes[5] < 1.0):
+            self.v = self.lin_vel_max * (msg.axes[5] - 1.0)/(-2.0)
         else:
-            self.v = 0
+            self.v = self.lin_vel_max * (msg.axes[2] - 1.0)/(2.0)
 
-        if abs(msg.axes[0]) > 0.05:
+        # if msg.buttons[0] == 1:
+        #     self.v = self.lin_vel_max
+        # elif msg.buttons[1] == 1:
+        #     self.v = -self.lin_vel_max
+        # else:
+        #     self.v = 0
+
+        if abs(msg.axes[0]) > 0.2:
             self.w = msg.axes[0] * self.ang_vel_scale
         else:
             self.w = 0

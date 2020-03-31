@@ -3,7 +3,7 @@
         <param name="dev" type="str" value="/dev/input/by-id/usb-Microsoft_Controller_7EED8EFC5A79-joystick" />
     </node>
 
-    <node name="teleop_parser" pkg="parser" type="teleop_parser.py" required="true">
+    <node name="teleop_parser" pkg="parser" type="teleop_parser.py" required="true" output="screen">
         <param name="lin_vel_max" value="0.2"/>
         <param name="ang_vel_scale" value="2"/>
     </node>
