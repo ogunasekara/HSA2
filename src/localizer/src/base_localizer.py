@@ -14,7 +14,7 @@ class BaseLocalizer(object):
     def __init__(self):
         # get parameters
         self.WHEEL_RADIUS = rospy.get_param('wheel_radius', 0.075)
-        self.WHEEL_BASE = rospy.get_param('wheel_base', 0.3937)
+        self.WHEEL_BASE = rospy.get_param('wheel_base', 0.4064)
         self.ENC_TPR = rospy.get_param('tpr', 1180.0)
 
         # initialize attributes
