@@ -1,3 +1,5 @@
+#include <Encoder.h>
+
 // MACRO DEFINITIONS
 #define RIGHT_WHEEL_PWM 6
 #define RIGHT_WHEEL_DIR 12
@@ -9,7 +11,7 @@
 #define LEFT_WHEEL_ENCA 3
 #define LEFT_WHEEL_ENCB 4
 
-#define TICKS_PER_REV 200.0 // ppr of motor encoder
+#define TICKS_PER_REV 1180.0 // ppr of motor encoder
 #define WHEEL_RADIUS 0.075 // radius of attached wheel (m)
 
 // PID Constants
@@ -32,6 +34,9 @@ float right_motor_out_clamp = 255;
 float right_motor_last, right_motor_accumulate;
 
 // Motor Variables
+Encoder left_enc(LEFT_WHEEL_ENCA, LEFT_WHEEL_ENCB);
+Encoder right_enc(RIGHT_WHEEL_ENCA, RIGHT_WHEEL_ENCB);
+
 int left_enc_cur_ticks = 0;
 int left_enc_prev_ticks = 0;
 int left_motor_command = 0;
@@ -94,6 +99,9 @@ void checkEncoderRight(){
 ISR(TIMER1_OVF_vect)
 {
   TCNT1 = timer1_counter;   // reset timer
+
+  left_enc_cur_ticks = -left_enc.read();
+  right_enc_cur_ticks = right_enc.read();
 
   int left_enc_diff = left_enc_cur_ticks - left_enc_prev_ticks;
   int right_enc_diff = right_enc_cur_ticks - right_enc_prev_ticks;
@@ -166,8 +174,8 @@ void setup()
   Serial.begin(115200);
   Serial.println("Initializing...");
 
-  attachInterrupt(digitalPinToInterrupt(LEFT_WHEEL_ENCA), checkEncoderLeft, RISING); 
-  attachInterrupt(digitalPinToInterrupt(RIGHT_WHEEL_ENCA), checkEncoderRight, RISING);
+//  attachInterrupt(digitalPinToInterrupt(LEFT_WHEEL_ENCA), checkEncoderLeft, RISING); 
+//  attachInterrupt(digitalPinToInterrupt(RIGHT_WHEEL_ENCA), checkEncoderRight, RISING);
 
   // setup timers for velocity calculation
   cli();//stop interrupts
@@ -186,15 +194,6 @@ void setup()
 void loop()
 {    
   while(Serial.available() > 0){
-//    // read velocities
-//    int val1 = Serial.parseInt();
-//    int val2 = Serial.parseInt();
-    
-//    left_motor_desired_speed = Serial.parseFloat();
-//    right_motor_desired_speed = Serial.parseFloat();
-
-//    setMotorSpeed(left_motor_desired_speed, 1);
-//    setMotorSpeed(right_motor_desired_speed, 2);
     
     char r = Serial.read();
     if(r == 'L'){
@@ -205,13 +204,5 @@ void loop()
     }
     if(r == '\n'){}
 
-//    setMotorSpeed(val1,1);
-//    setMotorSpeed(val2,2);
-//    delay(1);
-//
-//    Serial.print(val1);
-//    Serial.print(",");
-//    Serial.print(val2);
-//    Serial.print("\n");
   }  
 }
