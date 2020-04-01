@@ -5,6 +5,9 @@ import sys
 
 from std_msgs.msg import Int32, Float32
 from sensor_msgs.msg import Imu
+from geometry_msgs.msg import Pose
+
+from tf.transformations import euler_from_quaternion, quaternion_from_euler
 
 class MotorParser(object):
     def __init__(self):
@@ -22,6 +25,8 @@ class MotorParser(object):
         self.ser.port = SERIAL_PORT
         self.ser.open()
 
+        rospy.loginfo("Serial Port opened")
+
         # initialize node
         rospy.init_node('motor_parser', anonymous=True)
 
@@ -34,9 +39,7 @@ class MotorParser(object):
         self.right_motor_enc_pub = rospy.Publisher('right_motor/fb/enc', Int32, queue_size=10)
         rospy.Subscriber("right_motor/cmd/vel", Float32, self.right_motor_vel_callback)
 
-        # rospy.Subscriber("motor/cmd/vel", String, self.motor_vel_callback)
-
-        # self.imu_pub = rospy.Publisher('imu', Imu, queue_size=10)
+        self.pose_pub = rospy.Publisher('base/pose', Pose, queue_size=10)
 
         # start main loop
         rate = rospy.Rate(20) # 10hz
@@ -51,12 +54,22 @@ class MotorParser(object):
                 self.left_motor_vel_pub.publish(float(vals[2]))
                 self.right_motor_vel_pub.publish(float(vals[3]))
 
-                # imu_msg = Imu()
-                # imu_msg.orientation.w = float(vals[4])
-                # imu_msg.orientation.x = float(vals[5])
-                # imu_msg.orientation.y = float(vals[6])
-                # imu_msg.orientation.z = float(vals[7])
-                # self.imu_pub.publish(imu_msg)
+                x = float(vals[4])
+                y = float(vals[5])
+                th = float(vals[6])
+                ang_quat = quaternion_from_euler(0, 0, th)
+
+                # publish pose
+                pose_msg = Pose()
+                pose_msg.position.x = x
+                pose_msg.position.y = y
+                pose_msg.position.z = 0
+                pose_msg.orientation.x = ang_quat[0]
+                pose_msg.orientation.y = ang_quat[1]
+                pose_msg.orientation.z = ang_quat[2]
+                pose_msg.orientation.w = ang_quat[3]
+
+                self.pose_pub.publish(pose_msg)
 
                 self.ser.write(b'L%f,R%f\n' % (self.left_motor_vel, self.right_motor_vel))
             except:
@@ -70,18 +83,6 @@ class MotorParser(object):
 
     def right_motor_vel_callback(self, msg):
         self.right_motor_vel = msg.data
-    
-    # def motor_vel_callback(self, msg):
-    #     vals = msg.data.strip().split(',')
-
-    #     if len(vals) != 2: pass
-
-    #     if vals[0][0] != 'L': pass
-
-    #     if vals[1][0] != 'R': pass
-
-    #     self.left_motor_vel = float(vals[0][1:])
-    #     self.right_motor_vel = float(vals[1][1:])
 
     # HELPER FUNCTIONS
 
