@@ -5,7 +5,7 @@ import time
 
 import numpy as np
 
-from std_msgs.msg import Float32
+from std_msgs.msg import Float32, Bool
 from geometry_msgs.msg import Pose
 
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -13,8 +13,8 @@ from tf.transformations import euler_from_quaternion, quaternion_from_euler
 class BasePlanner(object):
     def __init__(self):
         # get parameters
-        self.ang_vel_max = rospy.get_param('~ang_vel_max', 3)
-        self.ang_acc = rospy.get_param('~ang_acc', 0.4)
+        self.ang_vel_max = rospy.get_param('~ang_vel_max', 2.5)
+        self.ang_acc = rospy.get_param('~ang_acc', 2)
         self.lin_vel_max = rospy.get_param('~lin_vel_max', 0.4)
         self.lin_acc = rospy.get_param('~lin_acc', 0.4)
 
@@ -29,6 +29,7 @@ class BasePlanner(object):
         # initialize ROS publishers and subscribers
         rospy.Subscriber('base/pose', Pose, self.pose_callback)
         rospy.Subscriber('base/target_pose', Pose, self.target_pose_callback)
+        self.done_pub = rospy.Publisher('base/done', Bool, queue_size=10)
         self.left_motor_vel_pub = rospy.Publisher('left_motor/cmd/vel', Float32, queue_size=10)
         self.right_motor_vel_pub = rospy.Publisher('right_motor/cmd/vel', Float32, queue_size=10)
 
@@ -80,6 +81,9 @@ class BasePlanner(object):
         ang = self.target[2] - self.state[2]
         rospy.loginfo("rotate %f radians\n" %(ang))
         self.rotate(ang, 0.05)
+
+        # send done message
+        self.done_pub.publish(True)
 
     # HELPER FUNCTIONS
 
@@ -166,4 +170,7 @@ class BasePlanner(object):
         self.right_motor_vel_pub.publish(vr)
 
 if __name__ == '__main__':
-    BasePlanner()
+    try:
+        BasePlanner()
+    except rospy.ROSInterruptException:
+        pass
