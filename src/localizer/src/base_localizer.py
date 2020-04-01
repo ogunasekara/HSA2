@@ -126,4 +126,7 @@ class BaseLocalizer(object):
         return [qx, qy, qz, qw]
 
 if __name__ == '__main__':
-    BaseLocalizer()
+    try:
+        BaseLocalizer()
+    except rospy.ROSInterruptException:
+        pass
