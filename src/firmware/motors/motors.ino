@@ -11,11 +11,12 @@
 #define LEFT_WHEEL_ENCA 3
 #define LEFT_WHEEL_ENCB 4
 
-#define TICKS_PER_REV 1180.0 // ppr of motor encoder
-#define WHEEL_RADIUS 0.075 // radius of attached wheel (m)
+#define TICKS_PER_REV 1000.0 // ppr of motor encoder
+#define WHEEL_RADIUS 0.0775 // radius of attached wheel (m)
+#define WHEEL_BASE 0.406
 
 // PID Constants
-float left_motor_p = 80;
+float left_motor_p = 100;
 float left_motor_i = 0;
 float left_motor_d = 0;
 float left_motor_punch = 0;
@@ -33,6 +34,16 @@ float right_motor_i_clamp = 0;
 float right_motor_out_clamp = 255;
 float right_motor_last, right_motor_accumulate;
 
+// State Variables
+double k00, k01, k02;
+double k10, k11, k12;
+double k20, k21, k22;
+double k30, k31, k32;
+double v, w;
+double x = 0;
+double y = 0;
+double th = 0;
+
 // Motor Variables
 Encoder left_enc(LEFT_WHEEL_ENCA, LEFT_WHEEL_ENCB);
 Encoder right_enc(RIGHT_WHEEL_ENCA, RIGHT_WHEEL_ENCB);
@@ -40,17 +51,17 @@ Encoder right_enc(RIGHT_WHEEL_ENCA, RIGHT_WHEEL_ENCB);
 int left_enc_cur_ticks = 0;
 int left_enc_prev_ticks = 0;
 int left_motor_command = 0;
-float left_motor_desired_speed = 0;
-float left_motor_cur_speed = 0;
+double left_motor_desired_speed = 0;
+double left_motor_cur_speed = 0;
 
 int right_enc_cur_ticks = 0;
 int right_enc_prev_ticks = 0;
 int right_motor_command = 0;
-float right_motor_desired_speed = 0;
-float right_motor_cur_speed = 0;
+double right_motor_desired_speed = 0;
+double right_motor_cur_speed = 0;
 
 // Timer variables
-int timer1_freq = 10; 
+int timer1_freq = 100; 
 int timer1_counter;
 unsigned long cur_time;
  
@@ -98,6 +109,8 @@ void checkEncoderRight(){
 // calculate velocity and perform PID update @ 10 Hz
 ISR(TIMER1_OVF_vect)
 {
+  double dt = 0.01;
+  
   TCNT1 = timer1_counter;   // reset timer
 
   left_enc_cur_ticks = -left_enc.read();
@@ -108,11 +121,39 @@ ISR(TIMER1_OVF_vect)
 
   float k = 0.9;
 
-  left_motor_cur_speed += k * (2 * PI * WHEEL_RADIUS * (left_enc_diff / TICKS_PER_REV) / 0.1 - left_motor_cur_speed);
-  right_motor_cur_speed += k * (2 * PI * WHEEL_RADIUS * (right_enc_diff / TICKS_PER_REV) / 0.1 - right_motor_cur_speed);
+  left_motor_cur_speed += k * (2 * PI * WHEEL_RADIUS * (left_enc_diff / TICKS_PER_REV) / dt - left_motor_cur_speed);
+  right_motor_cur_speed += k * (2 * PI * WHEEL_RADIUS * (right_enc_diff / TICKS_PER_REV) / dt - right_motor_cur_speed);
 
   left_enc_prev_ticks = left_enc_cur_ticks;
   right_enc_prev_ticks = right_enc_cur_ticks;
+
+  // perform runge-kutta state update
+  v = (right_motor_cur_speed + left_motor_cur_speed) / 2.0;
+  w = (right_motor_cur_speed - left_motor_cur_speed) / WHEEL_BASE;
+  
+  k00 = v*cos(th);
+  k01 = v*sin(th);
+  k02 = w;
+
+//  k10 = v*cos(th + 0.5 * dt * k02);
+//  k11 = v*sin(th + 0.5 * dt * k02);
+//  k12 = w;
+//  
+//  k20 = v*cos(th + 0.5 * dt * k12);
+//  k21 = v*sin(th + 0.5 * dt * k12);
+//  k22 = w;
+//
+//  k30 = v*cos(th + dt * k22);
+//  k31 = v*sin(th + dt * k22);
+//  k32 = w;
+
+//  x += dt * (1.0/6.0) * (k00 + 2*(k10 + k20) * k30);
+//  y += dt * (1.0/6.0) * (k01 + 2*(k11 + k21) * k31);
+
+  x += dt * k00;
+  y += dt * k01;
+  th += dt * w;
+  th = atan2(sin(th), cos(th));
 
   if (left_motor_desired_speed == 0){
     left_motor_command = 0;
@@ -140,19 +181,6 @@ ISR(TIMER1_OVF_vect)
 
   setMotorSpeed(left_motor_command, 1);
   setMotorSpeed(right_motor_command, 2);
-
-  Serial.print(left_enc_cur_ticks);
-  Serial.print(",");
-  Serial.print(right_enc_cur_ticks);
-  Serial.print(",");
-  Serial.print(left_motor_cur_speed);
-  Serial.print(",");
-  Serial.print(right_motor_cur_speed);
-//  Serial.print(",");
-//  Serial.print(left_motor_command);
-//  Serial.print(",");
-//  Serial.print(right_motor_command);
-  Serial.print("\n");
 }
 
 void setup()
@@ -204,5 +232,24 @@ void loop()
     }
     if(r == '\n'){}
 
-  }  
+  }
+
+  // publish information at 20hz
+  if (millis() - cur_time > 50){
+    Serial.print(left_enc_cur_ticks);
+    Serial.print(",");
+    Serial.print(right_enc_cur_ticks);
+    Serial.print(",");
+    Serial.print(left_motor_cur_speed, 4);
+    Serial.print(",");
+    Serial.print(right_motor_cur_speed, 4);
+    Serial.print(",");
+    Serial.print(x, 4);
+    Serial.print(",");
+    Serial.print(y, 4);
+    Serial.print(",");
+    Serial.print(th, 4);
+    Serial.print("\n");
+    cur_time = millis();
+  }
 }
