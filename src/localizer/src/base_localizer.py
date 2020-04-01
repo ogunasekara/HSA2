@@ -2,10 +2,11 @@
 import rospy
 import tf2_ros
 import sys
+import time
 
 import numpy as np
 
-from std_msgs.msg import Int32
+from std_msgs.msg import Int32, Float32
 from geometry_msgs.msg import Pose, TransformStamped
 
 from tf.transformations import euler_from_quaternion, quaternion_from_euler
@@ -15,40 +16,33 @@ class BaseLocalizer(object):
         # get parameters
         self.WHEEL_RADIUS = rospy.get_param('wheel_radius', 0.075)
         self.WHEEL_BASE = rospy.get_param('wheel_base', 0.4064)
-        self.ENC_TPR = rospy.get_param('tpr', 1180.0)
+        self.ENC_TPR = rospy.get_param('tpr', 1120.0)
 
         # initialize attributes
         self.state = [0, 0, 0]
         self.ang_quat = [0, 0, 0, 0]
-        self.prev_enc = np.array([0, 0])
-        self.cur_enc = np.array([None, None])
+        self.cur_vel = np.array([None, None])
 
         # start main loop
         rospy.init_node('base_localizer', anonymous=True)
 
         # initialize ROS publishers and subscribers
         self.pose_pub = rospy.Publisher('base/pose', Pose, queue_size=10)
-        rospy.Subscriber("left_motor/fb/enc", Int32, self.left_motor_enc_callback)
-        rospy.Subscriber("right_motor/fb/enc", Int32, self.right_motor_enc_callback)
 
-        rospy.loginfo(self.WHEEL_BASE)
+        rospy.Subscriber("left_motor/fb/vel", Float32, self.left_motor_vel_callback)
+        rospy.Subscriber("right_motor/fb/vel", Float32, self.right_motor_vel_callback)
 
-        while None in self.cur_enc:
+        while None in self.cur_vel:
             continue
 
-        self.prev_enc[0] = self.cur_enc[0]
-        self.prev_enc[1] = self.cur_enc[1]
+        timer = time.time()
 
-        rate = rospy.Rate(10) # 10hz
+        rate = rospy.Rate(50)
         while not rospy.is_shutdown():
-            enc_diff = np.array(self.cur_enc) - np.array(self.prev_enc)
-
-            # rospy.loginfo(enc_diff)
-            
-            self.prev_enc[0] = self.cur_enc[0]
-            self.prev_enc[1] = self.cur_enc[1]
-
-            self.runge_kutta_update(enc_diff)
+            # perform runge-kutta update
+            dt = time.time() - timer
+            self.runge_kutta_update(dt)
+            timer = time.time()
 
             # publish pose
             pose_msg = Pose()
@@ -84,19 +78,17 @@ class BaseLocalizer(object):
 
     # ROS CALLBACK FUNCTIONS
 
-    def left_motor_enc_callback(self, msg):
-        self.cur_enc[0] = msg.data
+    def left_motor_vel_callback(self, msg):
+        self.cur_vel[0] = msg.data
 
-    def right_motor_enc_callback(self, msg):
-        self.cur_enc[1] = msg.data
+    def right_motor_vel_callback(self, msg):
+        self.cur_vel[1] = msg.data
 
     # HELPER FUNCTIONS
 
-    def runge_kutta_update(self, enc_diff):
-        dist_diff = enc_diff * (2.0 * np.pi * self.WHEEL_RADIUS / self.ENC_TPR)
-
-        v = (dist_diff[1] + dist_diff[0])/2.0
-        w = (dist_diff[1] - dist_diff[0])/self.WHEEL_BASE
+    def runge_kutta_update(self, dt):
+        v = (self.cur_vel[1] + self.cur_vel[0])/2.0
+        w = (self.cur_vel[1] - self.cur_vel[0])/self.WHEEL_BASE
 
         th = self.state[2]
 
@@ -104,24 +96,22 @@ class BaseLocalizer(object):
         k01 = v*np.sin(th)
         k02 = w
 
-        k10 = v*np.cos(th + 0.5 * k02)
-        k11 = v*np.sin(th + 0.5 * k02)
+        k10 = v*np.cos(th + 0.5 * dt * k02)
+        k11 = v*np.sin(th + 0.5 * dt * k02)
         k12 = w
         
-        k20 = v*np.cos(th + 0.5 * k12)
-        k21 = v*np.sin(th + 0.5 * k12)
+        k20 = v*np.cos(th + 0.5 * dt * k12)
+        k21 = v*np.sin(th + 0.5 * dt * k12)
         k22 = w
 
-        k30 = v*np.cos(th + k22)
-        k31 = v*np.sin(th + k22)
+        k30 = v*np.cos(th + dt * k22)
+        k31 = v*np.sin(th + dt * k22)
         k32 = w
 
-        self.state[0] = self.state[0] + (1.0/6.0) * (k00 + 2*(k10 + k20) * k30)
-        self.state[1] = self.state[1] + (1.0/6.0) * (k01 + 2*(k11 + k21) * k31)
-        self.state[2] = self.state[2] + w
+        self.state[0] = self.state[0] + dt * (1.0/6.0) * (k00 + 2*(k10 + k20) * k30)
+        self.state[1] = self.state[1] + dt * (1.0/6.0) * (k01 + 2*(k11 + k21) * k31)
+        self.state[2] = self.state[2] + dt * w
         self.state[2] = np.arctan2(np.sin(self.state[2]), np.cos(self.state[2]))
-
-        rospy.loginfo(self.state)
 
         self.ang_quat = quaternion_from_euler(0, 0, self.state[2])
 
@@ -136,4 +126,7 @@ class BaseLocalizer(object):
         return [qx, qy, qz, qw]
 
 if __name__ == '__main__':
-    BaseLocalizer()
+    try:
+        BaseLocalizer()
+    except rospy.ROSInterruptException:
+        pass
